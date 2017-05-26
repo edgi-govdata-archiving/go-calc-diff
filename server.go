@@ -27,29 +27,24 @@ var (
 
 func main() {
 	var err error
+	// setup config
 	cfg, err = initConfig(os.Getenv("GOLANG_ENV"))
 	if err != nil {
 		// panic if the server is missing a vital configuration detail
-		panic(fmt.Errorf("server configuration error: %s", err.Error()))
+		logger.Fatal(fmt.Errorf("server configuration error: %s", err.Error()))
 	}
 
 	s := &http.Server{}
 	m := http.NewServeMux()
-	m.HandleFunc("/.well-known/acme-challenge/", CertbotHandler)
-	// m.Handle("/", middleware(HealthCheckHandler))
-
 	m.Handle("/", middleware(DiffHandler))
+	m.HandleFunc("/.well-known/acme-challenge/", CertbotHandler)
 
 	// connect mux to server
 	s.Handler = m
 
-	// print notable config settings
-	// printConfigInfo()
-
 	// fire it up!
 	fmt.Println("starting server on port", cfg.Port)
-
 	// start server wrapped in a log.Fatal b/c http.ListenAndServe will not
-	// return unless there's an error
+	// return unless there's an error, which would be a program crash
 	logger.Fatal(StartServer(cfg, s))
 }
