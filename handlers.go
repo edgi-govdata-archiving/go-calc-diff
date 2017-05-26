@@ -15,7 +15,7 @@ var (
 	templates = template.Must(template.ParseFiles("views/diff.html"))
 )
 
-//
+// DiffHandler routes requests to the right func
 func DiffHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "OPTIONS":
@@ -27,25 +27,32 @@ func DiffHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CalcDiffHandler takes lots of query params to calc diffs
 func CalcDiffHandler(w http.ResponseWriter, r *http.Request) {
+	// url values as a & b query params or POST form values
 	a := r.FormValue("a")
 	b := r.FormValue("b")
+	// output format
+	format := r.FormValue("format")
+	// create & configure a differ
+	dmp := NewDifferFromRequest(r)
 
 	if a == "" || b == "" {
 		writeErrResponse(w, http.StatusBadRequest, fmt.Errorf("please supply both a & b urls"))
 		return
 	}
 
+	// GET both urls, returning response bodies as strings
 	aBody, bBody, err := FetchUrls(a, b)
 	if err != nil {
 		writeErrResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	dmp := NewDifferFromRequest(r)
-	diffs := CalcDiff(dmp, string(aBody), string(bBody))
+	// compare a & b to generate diffs diffs
+	diffs := CalcDiff(dmp, aBody, bBody)
 
-	format := r.FormValue("format")
+	// generate response
 	switch format {
 	case "json":
 		writeResponse(w, diffs)
@@ -60,9 +67,7 @@ func CalcDiffHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HealthCheckHandler is a basic "hey I'm fine" for load balancers & co
-// TODO - add Database connection & proper configuration checks here for more accurate
-// health reporting
+// HealthCheckHandler is a basic "hey I'm fine" for load balancers
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{ "status" : 200 }`))
@@ -79,6 +84,7 @@ func CertbotHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, cfg.CertbotResponse)
 }
 
+// NotFoundHandler is a basic JSON 404
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte(`{ "status" :  "not found" }`))
@@ -93,15 +99,21 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	}
 }
 
+// reqParamInt extracts an int from an http request based on a key.
+// it'll check query params and POST form values
 func reqParamInt(key string, r *http.Request) (int, error) {
 	i, err := strconv.ParseInt(r.FormValue(key), 10, 0)
 	return int(i), err
 }
 
+// reqParamInt extracts a float64 from an http request based on a key.
+// it'll check query params and POST form values
 func reqParamFloat(key string, r *http.Request) (float64, error) {
 	return strconv.ParseFloat(r.FormValue(key), 10)
 }
 
+// reqParamInt extracts a bool from an http request based on a key.
+// it'll check query params and POST form values
 func reqParamBool(key string, r *http.Request) (bool, error) {
 	return strconv.ParseBool(r.FormValue(key))
 }
