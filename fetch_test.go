@@ -6,26 +6,25 @@ import (
 
 func TestFetchUrl(t *testing.T) {
 	cases := []struct {
-		url         string
-		shouldFetch bool
-		err         error
+		url string
+		err error
 	}{
-	// {"ftp://stuff.ftp.dontfetch.com", false, nil},
-	// {"http://www.apple.com", true, nil},
-	// {"https://www.apple.com", true, nil},
+		{"ftp://stuff.ftp.dontfetch.com", ErrBadUrl},
+		{"http://www.apple.com", nil},
+		{"https://www.apple.com", nil},
 	}
 
 	for i, c := range cases {
 		res := make(chan fetchResult, 0)
-		FetchUrl(c.url, res)
+		go FetchUrl(c.url, res)
 		r := <-res
+
 		if r.err != c.err {
 			t.Errorf("case %d error mismatch. expected: '%s', got: '%s'", i, c.err, r.err)
 		}
 
-		// if fetched != c.shouldFetch {
-		// 	t.Errorf("case %d error fetched mismatch. expected: %t, got: %t", i, c.shouldFetch, fetched)
-		// }
-
+		if r.res != nil {
+			r.res.Body.Close()
+		}
 	}
 }

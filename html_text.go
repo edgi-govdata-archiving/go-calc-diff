@@ -6,35 +6,29 @@ import (
 	"strings"
 )
 
-var (
-	textElements       = strings.Join([]string{"blockquote", "dd", "dl", "dt", "figcaption", "figure", "hr", "li", "main", "ol", "p", "pre", "ul"}, ",")
-	inlineTextElements = strings.Join([]string{"a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data", "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "rtc", "ruby", "s", "samp", "small", "span", "strong", "sub", "sup", "time", "u", "var", "wbr"}, ",")
-	tableElements      = strings.Join([]string{"caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr"}, ",")
-	formElements       = strings.Join([]string{"button", "datalist", "fieldset", "form", "input", "label", "legend", "meter", "optgroup", "option", "output", "progress", "select", "textarea"}, ",")
-	selector           = strings.Join([]string{textElements, inlineTextElements, tableElements, formElements}, ",")
-)
-
+// HtmlTextContent is a very naive text-ripper. It constructs a jQuery-like document
+// from returned html, grabs all elements from the body, removes all "script-like" tags
+// from the selection, and concatenates the text values into a string with space-separators.
+// surprisingly effective.
 func HtmlTextContent(res *http.Response) (string, error) {
+	// response comes from remote server, must be closed when we're done
 	defer res.Body.Close()
+	// goquery is the package that does most of the heavy lifting here
 	doc, err := goquery.NewDocumentFromResponse(res)
 	if err != nil {
 		return "", err
 	}
 
-	added := 0
-	text := ""
+	// slice of text elements
+	text := []string{}
 
-	doc.Find(selector).Each(func(i int, el *goquery.Selection) {
-		t := el.Text()
+	// iterate through designated body nodes, adding any text that isn't blank to the text slice
+	doc.Find("body").Find("*").Not("script, style, noscript, canvas").Each(func(i int, el *goquery.Selection) {
+		t := strings.TrimSpace(el.Text())
 		if t != "" {
-			if added == 0 {
-				text = el.Text()
-			} else {
-				text += " " + el.Text()
-			}
-			added++
+			text = append(text, t)
 		}
 	})
 
-	return strings.TrimSpace(text), nil
+	return strings.Join(text, " "), nil
 }

@@ -1,2 +1,5 @@
 .DS_Store
-differ
+errors-*.html
+output-*.txt
+coverage.out
+go-diff-calc

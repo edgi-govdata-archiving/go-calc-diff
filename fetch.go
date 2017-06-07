@@ -29,7 +29,7 @@ func FetchUrlsString(a, b string) (aRes string, bRes string, err error) {
 	aRes = string(resBytes)
 
 	defer br.Body.Close()
-	resBytes, err = ioutil.ReadAll(ar.Body)
+	resBytes, err = ioutil.ReadAll(br.Body)
 	if err != nil {
 		return
 	}
@@ -40,6 +40,10 @@ func FetchUrlsString(a, b string) (aRes string, bRes string, err error) {
 
 // FetchUrls grabs a & b in parallel
 func FetchUrls(a, b string) (aRes *http.Response, bRes *http.Response, err error) {
+	if a == b {
+		return nil, nil, fmt.Errorf("a and b urls cannot be equal")
+	}
+
 	// create a channel to send responses on
 	ch := make(chan fetchResult, 0)
 
@@ -78,11 +82,11 @@ func FetchUrl(rawurl string, done chan fetchResult) {
 		return
 	}
 	if !(parsed.Scheme == "http" || parsed.Scheme == "https") {
-		r.err = fmt.Errorf("differ can only fetch http or https urls")
+		r.err = ErrBadUrl
 		done <- r
 		return
 	}
-
+	fmt.Println("getting", rawurl)
 	// GET the passed in url
 	res, err := http.Get(parsed.String())
 	if err != nil {
