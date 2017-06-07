@@ -74,6 +74,7 @@ func jsonResponse(w http.ResponseWriter, env interface{}) error {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(res)
 	return err
 }
