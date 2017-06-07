@@ -20,6 +20,7 @@ func TestHtmlTextContent(t *testing.T) {
 	}{
 		{"simple.html", "simple.txt", nil},
 		{"epa.gov.html", "epa.gov.txt", nil},
+		{"apple.com.html", "apple.com.txt", nil},
 	}
 
 	for i, c := range cases {
@@ -45,11 +46,11 @@ func TestHtmlTextContent(t *testing.T) {
 			t.Errorf("case %d error mismatch: %s != %s", i, c.err, err)
 		}
 
-		// Uncomment this to write the raw text to output-[casenum].txt
-		// ioutil.WriteFile(fmt.Sprintf("output-%d.txt", i), []byte(got), os.ModePerm)
-
 		if got != out {
 			// t.Errorf("case %d text output mismatch", i)
+
+			// Uncomment this to write the raw text to output-[casenum].txt
+			ioutil.WriteFile(fmt.Sprintf("output-%d.txt", i), []byte(got), os.ModePerm)
 
 			filename := fmt.Sprintf("errors-%d.html", i)
 			dmp := diffmatchpatch.New()
