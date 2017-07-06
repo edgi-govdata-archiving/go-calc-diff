@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/qri-io/go-diff/diffmatchpatch"
 	"io"
 	"net/http"
 	"strconv"
@@ -29,12 +30,19 @@ func DiffHandler(w http.ResponseWriter, r *http.Request) {
 
 // CalcDiffHandler takes lots of query params to calc diffs
 func CalcDiffHandler(w http.ResponseWriter, r *http.Request) {
+	var diffs []diffmatchpatch.Diff
+	var err error
+
 	// url values as a & b query params or POST form values
 	a := r.FormValue("a")
 	b := r.FormValue("b")
-	// output format
+	// snag output format from request
 	format := r.FormValue("format")
-	// create & configure a differ
+
+	// do we want to diff html text?
+	htmlText := r.FormValue("html_text")
+
+	// create & configure a differ from the request
 	dmp := NewDifferFromRequest(r)
 
 	if a == "" || b == "" {
@@ -42,15 +50,17 @@ func CalcDiffHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// GET both urls, returning response bodies as strings
-	aBody, bBody, err := FetchUrls(a, b)
+	// compare a & b to generate diffs
+	if htmlText == "true" {
+		diffs, err = HtmlTextDiff(dmp, a, b)
+	} else {
+		diffs, err = HtmlDiff(dmp, a, b)
+	}
+
 	if err != nil {
 		writeErrResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-
-	// compare a & b to generate diffs diffs
-	diffs := CalcDiff(dmp, aBody, bBody)
 
 	// generate response
 	switch format {

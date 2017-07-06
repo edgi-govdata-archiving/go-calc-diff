@@ -9,13 +9,41 @@ import (
 
 // fetchResult represents the result of a fetch
 type fetchResult struct {
-	url  string
-	body string
-	err  error
+	url string
+	res *http.Response
+	err error
+}
+
+// FetchUrlString grabs urls a & b, returning their bodies as strings
+func FetchUrlsString(a, b string) (aRes string, bRes string, err error) {
+	ar, br, err := FetchUrls(a, b)
+	if err != nil {
+		return
+	}
+
+	defer ar.Body.Close()
+	resBytes, err := ioutil.ReadAll(ar.Body)
+	if err != nil {
+		return
+	}
+	aRes = string(resBytes)
+
+	defer br.Body.Close()
+	resBytes, err = ioutil.ReadAll(br.Body)
+	if err != nil {
+		return
+	}
+	bRes = string(resBytes)
+
+	return
 }
 
 // FetchUrls grabs a & b in parallel
-func FetchUrls(a, b string) (aRes string, bRes string, err error) {
+func FetchUrls(a, b string) (aRes *http.Response, bRes *http.Response, err error) {
+	if a == b {
+		return nil, nil, fmt.Errorf("a and b urls cannot be equal")
+	}
+
 	// create a channel to send responses on
 	ch := make(chan fetchResult, 0)
 
@@ -23,25 +51,25 @@ func FetchUrls(a, b string) (aRes string, bRes string, err error) {
 	go FetchUrl(a, ch)
 	go FetchUrl(b, ch)
 
-	// loop
+	// loop to block & read from parallel requests
 	for i := 2; i > 0; i-- {
 		// read from responses channel
 		// this blocks until something sends on ch
-		res := <-ch
-		if res.err != nil {
-			err = res.err
+		r := <-ch
+		if r.err != nil {
+			err = r.err
 			return
-		} else if res.url == a {
-			aRes = res.body
-		} else if res.url == b {
-			bRes = res.body
+		} else if r.url == a {
+			aRes = r.res
+		} else if r.url == b {
+			bRes = r.res
 		}
 	}
 
 	return
 }
 
-// FetchUrl grabs a url, returning it's response body
+// FetchUrl grabs a url, returning the response on a chan of fetchResult
 func FetchUrl(rawurl string, done chan fetchResult) {
 	// our result, labelled by the rawurl
 	r := fetchResult{url: rawurl}
@@ -54,24 +82,17 @@ func FetchUrl(rawurl string, done chan fetchResult) {
 		return
 	}
 	if !(parsed.Scheme == "http" || parsed.Scheme == "https") {
-		r.err = fmt.Errorf("differ can only fetch http or https urls")
+		r.err = ErrBadUrl
 		done <- r
 		return
 	}
-
+	fmt.Println("getting", rawurl)
 	// GET the passed in url
 	res, err := http.Get(parsed.String())
 	if err != nil {
 		r.err = fmt.Errorf("fetch url %s failed: %s", rawurl, err)
-		done <- r
-		return
 	}
-	defer res.Body.Close()
-
-	// read the
-	resBytes, err := ioutil.ReadAll(res.Body)
-	r.body = string(resBytes)
-	r.err = err
+	r.res = res
 	// send the response to the done chan
 	done <- r
 }

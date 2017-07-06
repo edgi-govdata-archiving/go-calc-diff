@@ -1,8 +1,17 @@
 {
-	"ImportPath": "github.com/edgi-govdata-archiving/differ",
+	"ImportPath": "github.com/edgi-govdata-archiving/go-diff-calc",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Deps": [
+		{
+			"ImportPath": "github.com/PuerkitoBio/goquery",
+			"Comment": "v1.1.0-5-g2dc9389",
+			"Rev": "2dc93891ab3bcc1dbc2cbf9bc6376c37f6e6f289"
+		},
+		{
+			"ImportPath": "github.com/andybalholm/cascadia",
+			"Rev": "349dd0209470eabd9514242c688c403c0926d266"
+		},
 		{
 			"ImportPath": "github.com/archivers-space/config",
 			"Rev": "eba5c3af9362873cc43c38480ab443c9518c8c06"
@@ -18,19 +27,19 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/acme",
-			"Rev": "453249f01cfeb54c3d549ddb75ff152ca243f9d8"
+			"Rev": "e1a4589e7d3ea14a3352255d04b6f1a418845e5e"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/acme/autocert",
-			"Rev": "453249f01cfeb54c3d549ddb75ff152ca243f9d8"
+			"Rev": "e1a4589e7d3ea14a3352255d04b6f1a418845e5e"
 		},
 		{
-			"ImportPath": "golang.org/x/net/context",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "59a0b19b5533c7977ddeb86b017bf507ed407b12"
 		},
 		{
-			"ImportPath": "golang.org/x/net/context/ctxhttp",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"ImportPath": "golang.org/x/net/html/atom",
+			"Rev": "59a0b19b5533c7977ddeb86b017bf507ed407b12"
 		}
 	]
 }

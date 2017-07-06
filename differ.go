@@ -52,7 +52,32 @@ func NewDifferFromRequest(r *http.Request) *diffmatchpatch.DiffMatchPatch {
 	return dmp
 }
 
-// CalcDiff is just a wrapper around dmp.DiffMain
-func CalcDiff(dmp *diffmatchpatch.DiffMatchPatch, text1, text2 string) []diffmatchpatch.Diff {
-	return dmp.DiffMain(text1, text2, false)
+// HtmlDiff calculates
+func HtmlDiff(dmp *diffmatchpatch.DiffMatchPatch, a, b string) ([]diffmatchpatch.Diff, error) {
+	// GET both urls, response bodies as strings
+	text1, text2, err := FetchUrlsString(a, b)
+	if err != nil {
+		return nil, err
+	}
+
+	return dmp.DiffMain(text1, text2, false), nil
+}
+
+func HtmlTextDiff(dmp *diffmatchpatch.DiffMatchPatch, a, b string) ([]diffmatchpatch.Diff, error) {
+	ares, bres, err := FetchUrls(a, b)
+	if err != nil {
+		return nil, err
+	}
+
+	text1, err := HtmlTextContent(ares)
+	if err != nil {
+		return nil, err
+	}
+
+	text2, err := HtmlTextContent(bres)
+	if err != nil {
+		return nil, err
+	}
+
+	return dmp.DiffMain(text1, text2, false), nil
 }
